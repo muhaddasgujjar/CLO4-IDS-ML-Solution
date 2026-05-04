@@ -116,6 +116,11 @@ body(
     "to provide a fully self-contained security simulator. The tool accurately illustrates rule chains "
     "and prioritizations, helping students understand defensive network design principles."
 )
+doc.add_paragraph()
+p = doc.add_paragraph()
+rb = p.add_run("GitHub Repository: "); rb.font.bold = True
+rv = p.add_run("https://github.com/muhaddasgujjar/CLO4-IDS-ML-Solution/tree/main/Assignment3")
+rv.font.color.rgb = RGBColor(0x19,0x76,0xD2)
 
 path = f"{OUT}/Assignment3_Report_AbdulRehman.docx"
 doc.save(path)

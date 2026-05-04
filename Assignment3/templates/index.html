@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DefendX – Scanner & Firewall Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #090d16;
+            --bg2: #0e1424;
+            --surface: rgba(20, 28, 50, 0.82);
+            --border: rgba(99, 122, 255, 0.22);
+            --accent: #5572ff;
+            --accent-glow: rgba(85, 114, 255, 0.35);
+            --text: #f1f4f9;
+            --text-muted: #8c97af;
+            --success: #10b981;
+            --danger: #ef4444;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Ambient grid pattern */
+        .ambient-grid {
+            position: fixed; inset: 0; z-index: -1;
+            background-image: 
+                linear-gradient(rgba(85, 114, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(85, 114, 255, 0.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 24px;
+            flex: 1;
+        }
+
+        /* Header section */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 28px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-box {
+            background: linear-gradient(135deg, var(--accent), #e11d48);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+
+        .logo-text h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .user-meta {
+            text-align: right;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .user-meta span {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* Dashboard layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 968px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Cards styling */
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            transition: all 0.25s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(85, 114, 255, 0.15);
+            border-color: rgba(85, 114, 255, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 4px;
+        }
+
+        .card-header h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-icon {
+            font-size: 1.3rem;
+        }
+
+        /* Controls / Form inputs */
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            color: #fff;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(85, 114, 255, 0.45);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Table design */
+        .table-container {
+            max-height: 380px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg2);
+        }
+
+        .scan-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+
+        .scan-table th, .scan-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .scan-table th {
+            background: var(--surface);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            position: sticky; top: 0;
+        }
+
+        .scan-table tr:hover {
+            background: rgba(85, 114, 255, 0.04);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-open {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: var(--success);
+        }
+
+        .badge-closed {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: var(--danger);
+        }
+
+        /* Rule builder & Firewall rule styling */
+        .rules-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 230px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .rule-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg2);
+            font-size: 0.88rem;
+        }
+
+        .rule-desc {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .rule-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .rule-allow {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .rule-deny {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .rule-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+        }
+
+        /* Firewall flow chart */
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            position: relative;
+        }
+
+        .flow-nodes {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            padding: 10px 0;
+        }
+
+        .flow-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            width: 80px;
+            text-align: center;
+        }
+
+        .node-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--text);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .node-active .node-icon {
+            border-color: var(--accent);
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .flow-connector {
+            flex: 1;
+            height: 3px;
+            background: var(--border);
+            position: relative;
+            margin: 0 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .connector-active {
+            background: linear-gradient(90deg, var(--accent), var(--accent));
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .connector-blocked {
+            background: linear-gradient(90deg, var(--accent), var(--danger));
+        }
+
+        .flow-status-text {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+            padding-top: 4px;
+        }
+
+        .highlight-allow { color: var(--success); }
+        .highlight-deny { color: var(--danger); font-weight: bold; }
+
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 24px 0;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-grid"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-box">🛡️</div>
+                <div class="logo-text">
+                    <h1>DefendX</h1>
+                    <span>Scanner & Firewall Visualizer</span>
+                </div>
+            </div>
+            <div class="user-meta">
+                Student Name: <span>Abdul Rehman</span><br>
+                Roll Number: <span>03-134222-005</span><br>
+                Course: <span>Information Security (CLO 4)</span>
+            </div>
+        </header>
+
+        <!-- Dashboard body -->
+        <div class="dashboard-grid">
+            <!-- Left Panel: Scanner -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🔎</span>
+                    <h2>Target Network Scanner</h2>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="target">Target IP / Hostname</label>
+                    <div class="input-row">
+                        <input type="text" id="target" value="127.0.0.1" class="form-input" placeholder="e.g. 127.0.0.1">
+                        <select id="scan-type" class="form-input" style="max-width: 170px;">
+                            <option value="Full Connect">Full Connect</option>
+                            <option value="TCP SYN">TCP SYN</option>
+                            <option value="UDP Scan">UDP Scan</option>
+                        </select>
+                        <button class="btn btn-primary" id="scan-btn" onclick="startScan()">Scan</button>
+                    </div>
+                </div>
+
+                <!-- Live Results -->
+                <div class="field-group" style="flex: 1;">
+                    <label class="field-label">Port Results</label>
+                    <div class="table-container">
+                        <table class="scan-table" id="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Port</th>
+                                    <th>Service</th>
+                                    <th>Scan Type</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-tbody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-muted);">No scan results yet. Enter a target and hit Scan.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Firewall Rules & Simulator -->
+            <div class="card" style="gap: 16px;">
+                <div class="card-header">
+                    <span class="card-icon">🧱</span>
+                    <h2>Firewall Rule Engine</h2>
+                </div>
+
+                <!-- Add rule controls -->
+                <div class="field-group">
+                    <label class="field-label">Define New Policy Rule</label>
+                    <div class="input-row" style="flex-wrap: wrap;">
+                        <select id="rule-action" class="form-input" style="width: 105px;">
+                            <option value="DENY">Deny</option>
+                            <option value="ALLOW">Allow</option>
+                        </select>
+                        <input type="text" id="rule-ip" class="form-input" style="flex:1; min-width: 130px;" value="127.0.0.1" placeholder="IP Address">
+                        <input type="number" id="rule-port" class="form-input" style="width: 100px;" value="80" placeholder="Port">
+                        <button class="btn btn-danger" onclick="addRule()" style="padding: 12px 18px;">Add</button>
+                    </div>
+                </div>
+
+                <!-- Configured Rules list -->
+                <div class="field-group">
+                    <label class="field-label">Priority Ruleset</label>
+                    <div class="rules-list" id="rules-list">
+                        <!-- Sample rule -->
+                        <div class="rule-item">
+                            <div class="rule-desc">
+                                <span class="rule-badge rule-deny">DENY</span>
+                                <span class="rule-meta">Any traffic from 10.0.0.5:*</span>
+                            </div>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; font-style: italic;">System Preset</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Flow diagram -->
+                <div class="field-group">
+                    <label class="field-label">Rule Testing & Flow Visualization</label>
+                    <div class="flow-container">
+                        <div class="flow-nodes">
+                            <div class="flow-node node-active">
+                                <div class="node-icon">💻</div>
+                                <span>Src Host</span>
+                            </div>
+                            <div class="flow-connector connector-active" id="flow-link-1"></div>
+                            <div class="flow-node">
+                                <div class="node-icon">🛡️</div>
+                                <span>Firewall</span>
+                            </div>
+                            <div class="flow-connector" id="flow-link-2"></div>
+                            <div class="flow-node">
+                                <div class="node-icon">🖥️</div>
+                                <span>Dst Host</span>
+                            </div>
+                        </div>
+                        <div class="flow-status-text" id="flow-status">Traffic status: <span class="highlight-allow">Allowed</span> (No intercept rules applied)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            DefendX — Assignment 3 | Information Security | Abdul Rehman (03-134222-005)
+        </footer>
+    </div>
+
+    <script>
+        // Pre-loaded rule set
+        let firewallRules = [
+            { action: "DENY", ip: "10.0.0.5", port: "ALL" }
+        ];
+
+        function renderRules() {
+            const list = document.getElementById("rules-list");
+            list.innerHTML = "";
+            firewallRules.forEach((r, idx) => {
+                list.innerHTML += `
+                    <div class="rule-item">
+                        <div class="rule-desc">
+                            <span class="rule-badge ${r.action === 'ALLOW' ? 'rule-allow' : 'rule-deny'}">${r.action}</span>
+                            <span class="rule-meta">${r.ip}:${r.port === 'ALL' ? '*' : r.port}</span>
+                        </div>
+                        <button class="icon-btn" onclick="deleteRule(${idx})" style="background: none; border: none; cursor: pointer; color: var(--danger);">🗑️</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addRule() {
+            const action = document.getElementById("rule-action").value;
+            const ip = document.getElementById("rule-ip").value.trim();
+            const port = document.getElementById("rule-port").value.trim() || "ALL";
+
+            if (!ip) {
+                alert("Please specify a valid source IP");
+                return;
+            }
+
+            firewallRules.unshift({ action, ip, port });
+            renderRules();
+            testTraffic();
+        }
+
+        function deleteRule(idx) {
+            firewallRules.splice(idx, 1);
+            renderRules();
+            testTraffic();
+        }
+
+        function testTraffic(targetIp = "127.0.0.1", targetPort = "80") {
+            let action = "ALLOW";
+            
+            // Check match sequentially (first match wins)
+            for (let r of firewallRules) {
+                const ipMatch = r.ip === targetIp || r.ip === "ALL" || r.ip === "*";
+                const portMatch = r.port === targetPort || r.port === "ALL" || r.port === "*";
+
+                if (ipMatch && portMatch) {
+                    action = r.action;
+                    break;
+                }
+            }
+
+            const link2 = document.getElementById("flow-link-2");
+            const flowStatus = document.getElementById("flow-status");
+
+            if (action === "ALLOW") {
+                link2.className = "flow-connector connector-active";
+                flowStatus.innerHTML = `Traffic status: <span class="highlight-allow">Allowed</span> to pass (Matched rule allows it)`;
+            } else {
+                link2.className = "flow-connector connector-blocked";
+                flowStatus.innerHTML = `Traffic status: <span class="highlight-deny">Blocked</span> by Firewall Ruleset!`;
+            }
+        }
+
+        async function startScan() {
+            const target = document.getElementById("target").value.trim();
+            const scanType = document.getElementById("scan-type").value;
+            const btn = document.getElementById("scan-btn");
+
+            if (!target) {
+                alert("Target is required");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = "⏳ Scan...";
+
+            try {
+                const res = await fetch("/api/scan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ target, scan_type: scanType })
+                });
+
+                if (!res.ok) throw new Error("Server error");
+                const data = await res.json();
+
+                const tbody = document.getElementById("results-tbody");
+                tbody.innerHTML = "";
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(r => {
+                        // Apply firewall intercept logic in simulation
+                        let status = r.status;
+                        
+                        // Check if firewall intercepts the traffic
+                        for (let fr of firewallRules) {
+                            if ((fr.ip === r.ip || fr.ip === "ALL") && (fr.port === String(r.port) || fr.port === "ALL")) {
+                                if (fr.action === "DENY") {
+                                    status = "Blocked by Firewall";
+                                }
+                                break;
+                            }
+                        }
+
+                        const statusBadge = status === "Open" 
+                            ? `<span class="badge badge-open">Open</span>`
+                            : status === "Blocked by Firewall"
+                                ? `<span class="badge badge-closed" style="background: rgba(239, 68, 68, 0.22); border-color: var(--danger);">Blocked</span>`
+                                : `<span class="badge badge-closed">Closed</span>`;
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td style="font-family: 'JetBrains Mono', monospace;">${r.port}</td>
+                                <td style="font-weight: 500;">${r.service}</td>
+                                <td style="color: var(--text-muted);">${r.scan_type}</td>
+                                <td>${statusBadge}</td>
+                            </tr>
+                        `;
+                    });
+
+                    // Test first port for the flow status visualizer
+                    if (data.results[0]) {
+                        testTraffic(data.results[0].ip, String(data.results[0].port));
+                    }
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No results returned.</td></tr>`;
+                }
+
+            } catch (err) {
+                alert("Error scanning target host.");
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Scan";
+            }
+        }
+
+        // Initial setup
+        renderRules();
+    </script>
+</body>
+</html>

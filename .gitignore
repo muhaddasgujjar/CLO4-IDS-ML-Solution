@@ -1,0 +1,10 @@
+dataset/
+*.zip
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+build_assignment.py
+make_report.py
+make_notebook.py
+A1-16042026-045239pm.docx
+metrics.json

@@ -241,6 +241,12 @@ r = p.add_run("Rule 3: Enable Logging")
 r.font.bold = True
 body("Purpose: Activating UFW logging ensures that any packets dropped by the 'default deny' policy or explicit deny rules are recorded in system logs (e.g., /var/log/ufw.log). This is critical for intrusion detection and monitoring unauthorized access attempts.")
 
+doc.add_paragraph()
+p = doc.add_paragraph()
+rb = p.add_run("GitHub Repository: "); rb.font.bold = True
+rv = p.add_run("https://github.com/muhaddasgujjar/CLO4-IDS-ML-Solution/tree/main/Assignment4")
+rv.font.color.rgb = RGBColor(0x19,0x76,0xD2)
+
 path = os.path.join(OUT_DIR, "Assignment4_Report_AbdulRehman.docx")
 doc.save(path)
 print(f"✅ Word report saved: {path}")
